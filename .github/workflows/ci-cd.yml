@@ -80,7 +80,12 @@ jobs:
             git pull origin "$BRANCH"
             ./vendor/bin/sail down || true
             ./vendor/bin/sail up -d --force-recreate --build
-            ./vendor/bin/sail composer install --no-dev --optimize-autoloader
+            docker run --rm \
+              -u "$(id -u):$(id -g)" \
+              -v $(pwd):/var/www/html \
+              -w /var/www/html \
+              laravelsail/php82-composer:latest \
+              composer install --ignore-platform-reqs
             ./vendor/bin/sail artisan migrate --force
             ./vendor/bin/sail artisan config:cache
             ./vendor/bin/sail artisan route:cache
