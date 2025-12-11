@@ -15,6 +15,7 @@ class TaskController extends Controller
 {
     public function __construct(private readonly TaskRepositoryInterface $tasks)
     {
+        
     }
 
     public function index(Request $request): JsonResponse
