@@ -11,6 +11,7 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        https: process.env.APP_ENV === 'production', // Asumiendo que defines esto en tu .env
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },
