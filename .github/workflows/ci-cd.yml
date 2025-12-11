@@ -76,7 +76,7 @@ jobs:
             git fetch origin "$BRANCH"
             git checkout "$BRANCH"
             git pull origin "$BRANCH"
-            if [ ! -x ./vendor/bin/sail ]; then
+            if [ ! -f ./vendor/bin/sail ]; then
               echo "vendor/bin/sail no existe. Asegura las dependencias instaladas en el servidor."
               exit 1
             fi
