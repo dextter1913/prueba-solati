@@ -78,8 +78,8 @@ jobs:
             git fetch origin "$BRANCH"
             git checkout "$BRANCH"
             git pull origin "$BRANCH"
-            ./vendor/bin/sail composer down || true
-            ./vendor/bin/sail composer up -d --force-recreate --build
+            ./vendor/bin/sail down || true
+            ./vendor/bin/sail up -d --force-recreate --build
             ./vendor/bin/sail composer install --no-dev --optimize-autoloader
             ./vendor/bin/sail artisan migrate --force
             ./vendor/bin/sail artisan config:cache
