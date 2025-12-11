@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Task;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class EloquentTaskRepository implements TaskRepositoryInterface
 {
@@ -30,22 +31,28 @@ class EloquentTaskRepository implements TaskRepositoryInterface
 
     public function createForUser(int $userId, array $data): Task
     {
-        return $this->task->newQuery()->create([
-            ...$data,
-            'user_id' => $userId,
-        ]);
+        return DB::transaction(function () use ($userId, $data) {
+            return $this->task->newQuery()->create([
+                ...$data,
+                'user_id' => $userId,
+            ]);
+        });
     }
 
     public function update(Task $task, array $data): Task
     {
-        $task->fill($data);
-        $task->save();
+        return DB::transaction(function () use ($task, $data) {
+            $task->fill($data);
+            $task->save();
 
-        return $task;
+            return $task;
+        });
     }
 
     public function delete(Task $task): void
     {
-        $task->delete();
+        DB::transaction(static function () use ($task) {
+            $task->delete();
+        });
     }
 }
