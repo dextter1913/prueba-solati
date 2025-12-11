@@ -1,0 +1,366 @@
+openapi: 3.0.3
+info:
+  title: API de Tareas
+  version: 1.0.0
+  description: API REST para gestionar tareas protegida con Laravel Sanctum.
+servers:
+  - url: http://localhost/api/v1
+    description: Entorno local (Laravel Sail)
+  - url: https://{host}/api/v1
+    description: Entorno de producción
+    variables:
+      host:
+        default: example.com
+components:
+  securitySchemes:
+    SanctumToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Bearer
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+        - id
+        - name
+        - email
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - title
+        - status
+    TaskInput:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: Comprar pan
+        description:
+          type: string
+          nullable: true
+          example: Comprar pan integral en la tarde
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+          example: pending
+    TaskUpdateInput:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Comprar pan y leche
+        description:
+          type: string
+          nullable: true
+          example: No olvidar comparar precios
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+          example: completed
+    AuthSuccess:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - message
+        - token
+        - user
+    TaskResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Task'
+    TaskListResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        links:
+          type: object
+        meta:
+          type: object
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+paths:
+  /auth/register:
+    post:
+      summary: Registrar un usuario
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                password_confirmation:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccess'
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+  /auth/login:
+    post:
+      summary: Iniciar sesión
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccess'
+        '422':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+  /auth/logout:
+    post:
+      summary: Cerrar sesión y revocar el token actual
+      tags:
+        - Autenticación
+      security:
+        - SanctumToken: []
+      responses:
+        '200':
+          description: Sesión cerrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Token inválido o ausente
+  /tasks:
+    get:
+      summary: Listar tareas del usuario
+      tags:
+        - Tareas
+      security:
+        - SanctumToken: []
+      parameters:
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+          description: Cantidad de elementos por página (por defecto 10)
+      responses:
+        '200':
+          description: Listado de tareas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '401':
+          description: No autorizado
+    post:
+      summary: Crear una nueva tarea
+      tags:
+        - Tareas
+      security:
+        - SanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':
+          description: Tarea creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          description: No autorizado
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+  /tasks/{task}:
+    get:
+      summary: Ver detalle de una tarea
+      tags:
+        - Tareas
+      security:
+        - SanctumToken: []
+      parameters:
+        - in: path
+          name: task
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tarea encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          description: No autorizado
+        '404':
+          description: No encontrada
+    put:
+      summary: Actualizar una tarea
+      tags:
+        - Tareas
+      security:
+        - SanctumToken: []
+      parameters:
+        - in: path
+          name: task
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateInput'
+      responses:
+        '200':
+          description: Tarea actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          description: No autorizado
+        '404':
+          description: No encontrada
+        '422':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+    delete:
+      summary: Eliminar una tarea
+      tags:
+        - Tareas
+      security:
+        - SanctumToken: []
+      parameters:
+        - in: path
+          name: task
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Eliminada correctamente
+        '401':
+          description: No autorizado
+        '404':
+          description: No encontrada
