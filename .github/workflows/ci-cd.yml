@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  PHP_VERSION: "8.2"
+  PHP_VERSION: "8.5"
   DEPLOY_BRANCH: master
   DEPLOY_PATH: /var/www/prueba-tecnica
 
