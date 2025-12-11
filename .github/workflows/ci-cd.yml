@@ -13,7 +13,7 @@ on:
 env:
   PHP_VERSION: "8.5"
   DEPLOY_BRANCH: master
-  DEPLOY_PATH: /var/www/prueba-tecnica
+  DEPLOY_PATH: /home/pi/proyectos/prueba-solati
 
 jobs:
   test:
@@ -78,6 +78,13 @@ jobs:
             git fetch origin "$BRANCH"
             git checkout "$BRANCH"
             git pull origin "$BRANCH"
+            docker run --rm \
+              -u "$(id -u):$(id -g)" \
+              -v "$(pwd)":/var/www/html \
+              -w /var/www/html \
+              laravelsail/php85-composer:latest \
+              composer install --no-interaction --prefer-dist --optimize-autoloader
+            chmod +x ./vendor/bin/sail
             ./vendor/bin/sail down || true
             ./vendor/bin/sail up -d --force-recreate --build
             ./vendor/bin/sail artisan migrate --force
