@@ -6,7 +6,7 @@ info:
 servers:
   - url: http://localhost/api/v1
     description: Entorno local (Laravel Sail)
-  - url: https://{host}/api/v1
+  - url: https://pruebasolati.tecnonube.online/api/v1
     description: Entorno de producción
     variables:
       host:
